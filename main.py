@@ -12,6 +12,9 @@ import random
 GW_PORT = 1650
 PUB_PORT = 5555
 
+GW_IP = "127.0.0.1"
+PUB_IP = "127.0.0.1"
+
 COUCHDB_HOST = 'http://smucl.ipc.uni-tuebingen.de:5984'
 COUCHDB_USERNAME = ""
 COUCHDB_PASSWORD = ""
@@ -23,10 +26,10 @@ def producer(gw_port, pub_port):
 
     context = zmq.Context()
     socket = context.socket(zmq.PAIR)
-    socket.connect("tcp://localhost:%s" % gw_port)
+    socket.connect("tcp://%s:%s" % (GW_IP, gw_port))
 
     pub = context.socket(zmq.PUB)
-    pub.connect("tcp://localhost:%s" % pub_port)
+    pub.bind("tcp://%s:%s" % (PUB_IP, pub_port))
     
     while True:
         packet = socket.recv()
@@ -57,7 +60,7 @@ def testsub(sub_port, client_id):
     context = zmq.Context()
     socket = context.socket(zmq.SUB)
     socket.setsockopt_string(zmq.SUBSCRIBE, client_id)
-    socket.connect("tcp://localhost:%s" % sub_port)
+    socket.connect("tcp://%s:%s" % (PUB_IP, sub_port))
 
     while True:
         message = socket.recv()

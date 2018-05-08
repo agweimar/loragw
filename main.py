@@ -1,3 +1,4 @@
+# vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
 import sys
 import time
 import base64
@@ -64,27 +65,28 @@ def package_preprocessor(gw_ip, gw_port, frontend_ip, frontend_port):
 
             datagram_raw =  json.loads(packet.decode())
             #print(datagram_raw)
+            timestamp = time.time()
             tmst = datagram_raw["rxpk"][0]['tmst']
             rssi = datagram_raw["rxpk"][0]['rssi']
-            tmst = datagram_raw["rxpk"][0]['tmst']
+            datr = datagram_raw["rxpk"][0]['datr']
+            freq = datagram_raw["rxpk"][0]['freq']
             node_id = base64.b64decode(datagram_raw["rxpk"][0]['data']).decode().split(',')[0]
             data = base64.b64decode(datagram_raw["rxpk"][0]['data']).decode().split(',')[1:]
 
             if node_id not in node_status:
                 node_status[node_id] = {}
-            node_status[node_id]['last_rec'] = time.time()
+            node_status[node_id]['last_rec'] = timestamp
             node_status[node_id]['tmst'] = tmst
-            node_status[node_id]['tmst'] = tmst
-            node_status[node_id]['tmst'] = tmst
+            node_status[node_id]['rssi'] = rssi
+            node_status[node_id]['datr'] = datr
+            node_status[node_id]['freq'] = freq
 
             print(rssi)
-            feed.send_string("%s %s" % ("couchdb", rssi))
+            feed.send_string("%s %s" % ("couchdb", data))
             # ALOHA
             #  push to lora_responder
-            feed.send_string("%s %s" % ("responder", rssi))
+            feed.send_string("%s %s" % ("responder", node_status[node_id]))
 
-            #print(node_status)
-            #print(node_status[node_id])
 
 def lora_responder(gw_ip, gw_port, backend_ip, backend_port):
     # keeps track of when the packed should be answered
@@ -96,7 +98,7 @@ def lora_responder(gw_ip, gw_port, backend_ip, backend_port):
 
     while True:
         message = sub.recv()
-        #print("responder: Received - %s" % message)
+        print("responder: Received - %s" % message)
 
 
 def couch_worker(couch_back_ip, couch_back_port):
@@ -112,8 +114,8 @@ def couch_worker(couch_back_ip, couch_back_port):
         message = rep.recv()
         #print("Received request: ", message)
         # -> to couchdb
-        time.sleep (1)
-        rep.send_string("data processed: %s" % message)
+        time.sleep(1)
+        rep.send_string("processed: %s" % message)
 
 def couch_queuer(backend_ip, backend_port, couch_front_ip, couch_front_port):
     # gets all data
@@ -181,28 +183,6 @@ def queue_couch(frontend_ip, frontend_port, backend_ip, backend_port):
         backend.setsockopt(zmq.LINGER, 0)
         backend.close()
         context.term()
-
-def streamer_device(frontend_ip, frontend_port, backend_ip, backend_port):
-
-    try:
-        context = zmq.Context(1)
-        # Socket facing clients
-        frontend = context.socket(zmq.PULL)
-        frontend.bind("tcp://%s:%d" % (frontend_ip, frontend_port))
-        # Socket facing services
-        backend = context.socket(zmq.PUSH)
-        backend.bind("tcp://%s:%d" % (backend_ip, backend_port))
-        
-        zmq.device(zmq.STREAMER, frontend, backend)
-    except KeyboardInterrupt:
-        pass
-    finally:
-        frontend.setsockopt(zmq.LINGER, 0)
-        frontend.close()
-        backend.setsockopt(zmq.LINGER, 0)
-        backend.close()
-        context.term()
-
 
 def fake_emitter(gw_ip, gw_port):
     context = zmq.Context()

@@ -6,15 +6,9 @@ import json
 import zmq
 from cloudant import couchdb
 from  multiprocessing import Process
+from config import *
 
 WORKER_COUNT = 3
-
-COUCH_BACK_IP = "loragw1"
-COUCH_BACK_PORT = 7778
-
-COUCHDB_HOST = 'http://localhost:5984'
-COUCHDB_USERNAME = ""
-COUCHDB_PASSWORD = ""
 
 def couch_worker(couch_back_ip, couch_back_port, worker_id):
     # gets all data
@@ -27,9 +21,8 @@ def couch_worker(couch_back_ip, couch_back_port, worker_id):
     # TODO
     while True:
         message = rep.recv()
-        couch_document = {
-                        data
-                        }
+        print(message)
+        couch_document = {}
         #print("Received request: ", message)
 	# open couchdb connection
         with couchdb(COUCHDB_USERNAME, COUCHDB_PASSWORD, url=COUCHDB_HOST) as client:

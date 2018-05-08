@@ -1,10 +1,10 @@
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
 
 GW_UP_IP = "127.0.0.1"
-GW_UP_PORT = 5555
+GW_UP_PORT = 1680
 
 GW_DOWN_IP = "127.0.0.1"
-GW_DOWN_PORT = 5556
+GW_DOWN_PORT = 1681
 
 FRONTEND_IP = "127.0.0.1"
 FRONTEND_PORT = 6665

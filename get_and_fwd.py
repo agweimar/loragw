@@ -1,20 +1,14 @@
-# vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
+#vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
 import sys
 import time
 import zmq
+import socket
 import json
+import pickle
 import base64
 from  multiprocessing import Process
 
-GW_UP_IP = "127.0.0.1"
-GW_UP_PORT = 5555
-
-FRONTEND_IP = "127.0.0.1"
-FRONTEND_PORT = 6665
-
-BACKEND_IP = "127.0.0.1"
-BACKEND_PORT = 6667
-
+from config import *
 
 def package_preprocessor(gw_ip, gw_port, frontend_ip, frontend_port):
     # gets forwarded packages from lora gw
@@ -23,55 +17,74 @@ def package_preprocessor(gw_ip, gw_port, frontend_ip, frontend_port):
     # topic responder: node_id, tmst
     # topic couch: node_id, data
     # topic node_list:
-    # TODO
-    # need poller?
 
-    node_status = {} 
+    # Create UDP socket
+    gw = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+
+    # Bind UDP socket to local port
+    gw.bind((gw_ip, gw_port))
 
     context = zmq.Context()
-
-    # connect to gw port
-    socket = context.socket(zmq.PAIR)
-    socket.connect("tcp://%s:%d" % (gw_ip, gw_port))
-
     # publish to forwarder
     feed = context.socket(zmq.PUB)
     feed.connect("tcp://%s:%d" % (frontend_ip, frontend_port))
-    
+
+    node_status = {} 
+
     while True:
-        packet = socket.recv()
+
+        packet = gw.recv(2048)
+
+        datagram_raw =  json.loads(packet[12:].decode())
+        if "rxpk" in datagram_raw:
+            packet_good = True
+        else:
+            packet_good = False
 
         # filter status packages from GW - what do?
-        packet_good = packet[12:] != b''
-
-        if packet_good:
+        if packet_good is True:
             # TODO
             # functions for dissecting packages based on protocol versions
-
-            datagram_raw =  json.loads(packet.decode())
-            #print(datagram_raw)
+        
             timestamp = time.time()
             tmst = datagram_raw["rxpk"][0]['tmst']
             rssi = datagram_raw["rxpk"][0]['rssi']
             datr = datagram_raw["rxpk"][0]['datr']
             freq = datagram_raw["rxpk"][0]['freq']
             node_id = base64.b64decode(datagram_raw["rxpk"][0]['data']).decode().split(',')[0]
-            data = base64.b64decode(datagram_raw["rxpk"][0]['data']).decode().split(',')[1:]
-
+            data = base64.b64decode(datagram_raw["rxpk"][0]['data']).decode().split(',')
+        
+            protocol_version = int(data[1])
+        
             if node_id not in node_status:
                 node_status[node_id] = {}
-            node_status[node_id]['last_rec'] = timestamp
-            node_status[node_id]['tmst'] = tmst
-            node_status[node_id]['rssi'] = rssi
-            node_status[node_id]['datr'] = datr
-            node_status[node_id]['freq'] = freq
-
-            print(rssi)
-            feed.send_string("%s %s" % ("couchdb", data))
-            # ALOHA
-            #  push to lora_responder
-            feed.send_string("%s %s" % ("responder", node_status[node_id]))
-
+            
+            if protocol_version is 2:
+                """
+                   LoRaWAN Class C
+                """
+            
+                data_structure = [ "mac", "protocol_version", "T", "RH", "CO2eq", "Tvoc", "EtOH_raw", "H2_raw"]
+                data_dict = dict(zip(data_structure, data))
+            
+                couch_document = {
+                        'tmst': timestamp,
+                        #'node_uuid': node_id,
+                        #'data':  ast.literal_eval(data),
+                        'data': data_dict,
+                        'packet_raw': datagram_raw
+                        }
+        
+                print("sending:{0}".format(json.dumps(couch_document)))
+                feed.send_string("%s %s" % ("couchdb", json.dumps(couch_document)))
+        
+            if protocol_version is 3:
+                """
+                   LoRaWAN Class C
+                """
+                # ALOHA
+                feed.send_string("%s %s" % ("responder", node_status[node_id]))
+        
 
 def forwarder_device(frontend_ip, frontend_port, backend_ip, backend_port):
 
@@ -96,52 +109,6 @@ def forwarder_device(frontend_ip, frontend_port, backend_ip, backend_port):
         backend.close()
         context.term()
 
-def fake_emitter(gw_ip, gw_port):
-    context = zmq.Context()
-    socket = context.socket(zmq.PAIR)
-    socket.bind("tcp://%s:%d" % (gw_ip, gw_port))
-    
-    fake_msg = json.dumps(
-    		{ "rxpk": [
-    			{
-    			    "size": 44,
-    			    "codr": "4/5",
-    			    "data": "MjQwYWM0OGU0YTgwLDIsMjkuMywzMS41LDQwMCwwLDE3MzEyLDEyODMyLDU=",
-    			    "modu": "LORA",
-    			    "chan": 1,
-    			    "lsnr": 8.2,
-    			    "freq": 868.3,
-    			    "tmst": 2555639019,
-    			    "rfch": 1,
-    			    "rssi": -68,
-    			    "stat": 1,
-    			    "datr": "SF7BW125"
-    			}
-    		]}
-    		)
-
-    fake_msg2 = json.dumps(
-    		{ "rxpk": [
-    			{
-    			    "size": 44,
-    			    "codr": "4/5",
-    			    "data": "MjQwYWM0OGU0YTgwLDIsMjkuMywzMS41LDQwMCwwLDE3MzEyLDEyODMyLDU=",
-    			    "modu": "LORA",
-    			    "chan": 1,
-    			    "lsnr": 8.2,
-    			    "freq": 868.3,
-    			    "tmst": 2555639019,
-    			    "rfch": 1,
-    			    "rssi": -69,
-    			    "stat": 1,
-    			    "datr": "SF7BW125"
-    			}
-    		]}
-    		)
-    while True:
-        socket.send_string(fake_msg)
-        socket.send_string(fake_msg2)
-        time.sleep(1)
 
 def main():
     Process(target=forwarder_device, args=(FRONTEND_IP, FRONTEND_PORT, BACKEND_IP, BACKEND_PORT)).start()

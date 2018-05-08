@@ -4,15 +4,6 @@ import time
 import zmq
 from  multiprocessing import Process
 
-BACKEND_IP = "127.0.0.1"
-BACKEND_PORT = 6667
-
-COUCH_FRONT_IP = "127.0.0.1"
-COUCH_FRONT_PORT = 7776
-
-COUCH_BACK_IP = "127.0.0.1"
-COUCH_BACK_PORT = 7778
-
 def couch_queuer(backend_ip, backend_port, couch_front_ip, couch_front_port):
     # gets all data
     # puts them into couchdb queue

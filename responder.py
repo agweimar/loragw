@@ -4,12 +4,7 @@ import time
 import zmq
 from  multiprocessing import Process
 
-GW_DOWN_IP = "127.0.0.1"
-GW_DOWN_PORT = 5556
-
-BACKEND_IP = "127.0.0.1"
-BACKEND_PORT = 6667
-
+from config import *
 
 def lora_responder(gw_ip, gw_port, backend_ip, backend_port):
     # keeps track of when the packed should be answered

@@ -14,10 +14,6 @@ def main():
     Process(target=couch_queuer, args=(BACKEND_IP, BACKEND_PORT, COUCH_FRONT_IP, COUCH_FRONT_PORT)).start()
     Process(target=lora_responder, args=(GW_DOWN_IP, GW_DOWN_PORT, BACKEND_IP, BACKEND_PORT)).start()
     Process(target=package_preprocessor, args=(GW_UP_IP, GW_UP_PORT, FRONTEND_IP, FRONTEND_PORT)).start()
-    print("Starting fake LoRa Package emitter")
-    Process(target=fake_emitter, args=(GW_UP_IP, GW_UP_PORT)).start()
-    pass
-
 
 if __name__ == '__main__':
 	main()

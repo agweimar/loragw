@@ -1,7 +1,6 @@
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
 import sys
 import time
-import base64
 import json
 import zmq
 from cloudant import couchdb

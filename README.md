@@ -5,6 +5,7 @@ It started as a project to learn zmq and still is...
 
 # topology
 
+```
                  +----------+
      +-----------> LoRa GW  |
      |           +----+-----+
@@ -29,7 +30,7 @@ It started as a project to learn zmq and still is...
                                    +----v-------+    +----------+
                                    |couch_worker+----> Couch DB |
                                    +------------+    +----------+
-
+```
 
 
 # TODO

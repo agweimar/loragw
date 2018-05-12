@@ -68,7 +68,7 @@ def package_preprocessor(gw_ip, gw_port, frontend_ip, frontend_port):
             if node_id not in node_status:
                 node_status[node_id] = {}
             
-            if protocol_version is 2:
+            if protocol_version is 99:
                 """
                    LoRaWAN Class C
                 """

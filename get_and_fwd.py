@@ -35,13 +35,19 @@ def package_preprocessor(gw_ip, gw_port, frontend_ip, frontend_port):
 
         packet = gw.recv(2048)
 
+        # filter status packages from GW - what do?
         datagram_raw =  json.loads(packet[12:].decode())
         if "rxpk" in datagram_raw:
             packet_good = True
         else:
             packet_good = False
 
-        # filter status packages from GW - what do?
+        # use only good packages
+        try:
+            base64.b64decode(datagram_raw["rxpk"][0]['data']).decode().split(',')
+        except:
+            packet_good = False
+
         if packet_good is True:
             # TODO
             # functions for dissecting packages based on protocol versions

@@ -1,5 +1,6 @@
 #vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
 import sys
+import re
 import time
 import zmq
 import socket
@@ -44,7 +45,9 @@ def package_preprocessor(gw_ip, gw_port, frontend_ip, frontend_port):
 
         # use only good packages
         try:
-            base64.b64decode(datagram_raw["rxpk"][0]['data']).decode().split(',')
+            uuid = base64.b64decode(datagram_raw["rxpk"][0]['data']).decode()[:12]
+            if re.search('[a-f0-9]{12}', uuid):
+                packet_good = True
         except:
             packet_good = False
 

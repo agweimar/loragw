@@ -63,7 +63,11 @@ def package_preprocessor(gw_ip, gw_port, frontend_ip, frontend_port):
             node_id = base64.b64decode(datagram_raw["rxpk"][0]['data']).decode().split(',')[0]
             data = base64.b64decode(datagram_raw["rxpk"][0]['data']).decode().split(',')
         
-            protocol_version = int(data[1])
+            try:
+                protocol_version = int(data[1])
+            except:
+                print("No Protocol version found")
+                print("Data: {0}".format(data))
         
             if node_id not in node_status:
                 node_status[node_id] = {}

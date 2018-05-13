@@ -89,6 +89,7 @@ def package_preprocessor(gw_ip, gw_port, frontend_ip, frontend_port):
                         }
         
                 print("sending:{0}".format(json.dumps(couch_document)))
+                feed.send_string("%s %s" % ("rangetest", json.dumps(couch_document)))
                 feed.send_string("%s %s" % ("couchdb", json.dumps(couch_document)))
         
             if protocol_version is 3:
@@ -97,6 +98,25 @@ def package_preprocessor(gw_ip, gw_port, frontend_ip, frontend_port):
                 """
                 # ALOHA
                 feed.send_string("%s %s" % ("responder", node_status[node_id]))
+
+            if protocol_version is 5:
+                """
+                   LoRaWAN Class C
+                """
+                data_structure = [ "mac", "protocol_version", "c1", "c2", "c3"]
+                data_dict = dict(zip(data_structure, data))
+            
+                couch_document = {
+                        'tmst': timestamp,
+                        #'node_uuid': node_id,
+                        #'data':  ast.literal_eval(data),
+                        'data': data_dict,
+                        'packet_raw': datagram_raw
+                        }
+        
+                print("sending:{0}".format(json.dumps(couch_document)))
+                feed.send_string("%s %s" % ("rangetest", json.dumps(couch_document)))
+                feed.send_string("%s %s" % ("couchdb", json.dumps(couch_document)))
         
 
 def forwarder_device(frontend_ip, frontend_port, backend_ip, backend_port):

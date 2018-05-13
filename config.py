@@ -27,3 +27,8 @@ with open("cred.login", 'r') as pwfile:
     COUCHDB_USERNAME = login
     COUCHDB_PASSWORD = pw
 
+with open("mqtt.login", 'r') as pwfile:
+    login, pw = pwfile.readline().strip('\n').split(':')
+    MQTT_USERNAME=login
+    MQTT_PASSWORD=pw
+
